@@ -1,9 +1,10 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from typing import Union
 from dotenv import load_dotenv
 from fastapi import UploadFile, File
-from utils.extract import extract_details
-from services.llm_usage import extract_project_details, analyze_project, combine_results
+from utils.helpers import extract_details, combine_results, clean_result_to_json
+from services.llm_usage import extract_project_details, analyze_project, suggestions, recommended_funders
 import tempfile
 import os
 
@@ -16,8 +17,15 @@ app = FastAPI(
     contact={
         "name": "TreeLoan",
         "url": "https://github.com/Totenem/TreeLoan",
-        "email": "info@treeloan.com"
     },
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 @app.get("/")
@@ -46,9 +54,30 @@ def green_analysis(proposal_file: UploadFile = File(...)):
         green_score = analyze_project(project_details)
 
         #combine the project details and green score and return the final result
-        final_result = combine_results(project_details, green_score)
-        return final_result
+        combined_results = combine_results(project_details, green_score)
+
+        #get suggestions for the project to increase the green score
+        suggestion_results = suggestions(combined_results)
+
+        partial_result = suggestion_results + combined_results
+
+        #get recommended funders for the project
+        recommended_funders_results = recommended_funders(partial_result)
+
+        final_result = recommended_funders_results + partial_result
+
+        #clean the final result to json
+        final_result_json = clean_result_to_json(final_result)
+
+        for item in final_result_json:
+            green_score = item.get("green_score")
+
+            if green_score is not None and green_score < 20:
+                return {
+                    "error": "The project is not green enough, please improve the project to increase the green score."
+                }
+        return final_result_json
     finally:
-        # Clean up temporary file
         if os.path.exists(tmp_file_path):
             os.unlink(tmp_file_path)
+
