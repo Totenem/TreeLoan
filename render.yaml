@@ -1,0 +1,38 @@
+services:
+  # Backend API Service
+  - type: web
+    name: treeloan-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn index:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: LOCAL_ORIGIN
+        value: http://localhost:3000
+      - key: PRODUCTION_ORIGIN
+        sync: false  # Set this manually in Render dashboard after frontend is deployed
+      - key: GROQ_API_KEY
+        sync: false  # Set this manually in Render dashboard with your API key
+    healthCheckPath: /
+
+  # Frontend Service
+  - type: web
+    name: treeloan-frontend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: treeloan-backend
+          property: host
+    healthCheckPath: /
+

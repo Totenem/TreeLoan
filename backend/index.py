@@ -20,9 +20,16 @@ app = FastAPI(
     },
 )
 
+LOCAL_ORIGIN = os.getenv("LOCAL_ORIGIN", "http://localhost:3000")
+DOCKER_ORIGIN = os.getenv("DOCKER_ORIGIN")
+PRODUCTION_ORIGIN = os.getenv("PRODUCTION_ORIGIN")
+
+# Filter out None values and create list of allowed origins
+allowed_origins = [origin for origin in [LOCAL_ORIGIN, DOCKER_ORIGIN, PRODUCTION_ORIGIN] if origin is not None]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
