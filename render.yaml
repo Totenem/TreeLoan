@@ -13,10 +13,6 @@ services:
         value: 3.11.0
       - key: LOCAL_ORIGIN
         value: http://localhost:3000
-      # - key: PRODUCTION_ORIGIN
-      #   sync: false  # Set this manually in Render dashboard after frontend is deployed
-      # - key: GROQ_API_KEY
-      #   sync: false  # Set this manually in Render dashboard with your API key
     healthCheckPath: /
 
   # Frontend Service
@@ -32,9 +28,6 @@ services:
       - key: NODE_VERSION
         value: 20.18.0
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: treeloan-backend
-          property: host
+        sync: false  
     healthCheckPath: /
 
