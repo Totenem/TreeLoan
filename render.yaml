@@ -25,6 +25,7 @@ services:
     env: node
     region: oregon
     plan: free
+    rootDir: frontend/tree-loan
     buildCommand: npm ci && npm run build
     startCommand: npm start
     envVars:
